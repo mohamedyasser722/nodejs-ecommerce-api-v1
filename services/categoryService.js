@@ -3,6 +3,7 @@ const CategoryModel = require('../models/categoryModel');
 const asyncHandler = require('express-async-handler');
 const { StatusCodes } = require('http-status-codes');
 const formatResponse = require('../utils/responseFormatter');
+const apiError = require('../utils/apiError');
 const MAX_LIMIT = 50;
 
 
@@ -20,10 +21,12 @@ exports.getCategories = asyncHandler(async (req, res) => {
 });
 
 // get category by id
-exports.getCategoryById = asyncHandler(async (req, res) => {
-    const category = await CategoryModel.findById(req.params.id); 
+exports.getCategoryById = asyncHandler(async (req, res, next) => {
+
+    const id = req.params.id;
+    const category = await CategoryModel.findById(id); 
     if (!category) {
-        return res.status(StatusCodes.NOT_FOUND).json({ message: 'Category not found' });
+        return next(apiError.NotFoundError('Category not found'));
     }
     res.status(StatusCodes.OK).json(category);
 });
@@ -83,20 +86,20 @@ exports.createCategory = asyncHandler(async (req, res) => {
 });
 
 // update category
-exports.updateCategory = asyncHandler(async (req, res) => {
+exports.updateCategory = asyncHandler(async (req, res, next) => {
     const { name } = req.body;
     const category = await CategoryModel.findByIdAndUpdate(req.params.id, { name, slug: slugify(name) }, { new: true });
     if (!category) {
-        return res.status(StatusCodes.NOT_FOUND).json({ message: 'Category not found' });
+        return next(apiError.NotFoundError('Category not found'));
     }
     res.status(StatusCodes.OK).json(category);
 });
 
 // delete category
-exports.deleteCategory = asyncHandler(async (req, res) => {
+exports.deleteCategory = asyncHandler(async (req, res, next) => {
     const category = await CategoryModel.findByIdAndDelete(req.params.id);
     if (!category) {
-        return res.status(StatusCodes.NOT_FOUND).json({ message: 'Category not found' });
+        return next(apiError.NotFoundError('Category not found'));
     }
     res.status(StatusCodes.NO_CONTENT).json({ message: 'Category deleted successfully' });
 });
